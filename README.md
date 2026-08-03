@@ -1,62 +1,71 @@
 # Library Management System
 
-Um sistema de gerenciamento de biblioteca desenvolvido em **C++ moderno**, com foco em boas práticas de engenharia de software, gerenciamento de memória e conceitos fundamentais da linguagem.
+A modern **C++ Library Management System** designed to study and apply professional software engineering practices, memory management, and modern C++ architecture.
 
-Este projeto foi criado para estudar e aplicar conceitos como **RAII**, **ownership**, **smart pointers**, **move semantics**, **STL**, **CMake** e organização de projetos C++.
-
----
-
-## Objetivos do projeto
-
-O principal objetivo é construir um sistema organizado que demonstre como o C++ moderno gerencia recursos de forma segura e eficiente.
-
-Conceitos aplicados:
+This project focuses on understanding and implementing core C++ concepts such as:
 
 * RAII (Resource Acquisition Is Initialization)
-* Ownership e gerenciamento de recursos
-* `std::unique_ptr`
-* `std::shared_ptr`
-* `std::weak_ptr`
-* Move semantics (`std::move`)
+* Ownership and resource management
+* Smart pointers (`std::unique_ptr`, `std::shared_ptr`, `std::weak_ptr`)
+* Move semantics
 * Rule of Zero / Rule of Five
-* Containers da STL
-* CMake
-* Testes automatizados
-* Debugging e sanitizers
+* STL containers
+* CMake project organization
+* Automated testing
+* Debugging and sanitizers
 
 ---
 
-# Arquitetura
+# Project Goal
 
-O sistema representa uma biblioteca onde usuários podem cadastrar livros e realizar empréstimos.
+The goal of this project is to build a library management system while applying modern C++ resource management techniques.
 
-Principais componentes:
+The main focus is not only creating a functional application, but designing the system with:
 
-## Book
-
-Representa um livro dentro do sistema.
-
-Responsabilidades:
-
-* Armazenar informações do livro.
-* Gerenciar seus próprios dados.
-* Utilizar o conceito de Rule of Zero quando possível.
+* Clear ownership rules
+* Automatic resource management
+* Safe object lifetime control
+* Maintainable project structure
 
 ---
 
-## Library
+# Concepts Applied
 
-Responsável pelo gerenciamento dos livros.
+## RAII (Resource Acquisition Is Initialization)
 
-A biblioteca possui ownership dos livros utilizando:
+RAII is used throughout the project to guarantee that resources are properly acquired and released automatically through object lifetime.
+
+Examples:
+
+* Automatic resource cleanup.
+* Objects managing their own lifetime.
+* Scoped resources.
+
+The goal is to prevent:
+
+* Memory leaks
+* Double deletion
+* Invalid resource access
+
+---
+
+# Ownership Model
+
+The project demonstrates different ownership relationships between objects.
+
+## unique_ptr
+
+Used when a resource has a single owner.
+
+Example:
 
 ```cpp
 std::unique_ptr<Book>
 ```
 
-Isso significa que a biblioteca é a única responsável pelo ciclo de vida dos objetos `Book`.
+The `Library` class owns the books and is responsible for their lifetime.
 
-Exemplo:
+Example:
 
 ```cpp
 library.addBook(
@@ -64,66 +73,87 @@ library.addBook(
 );
 ```
 
-Após adicionar o livro, a propriedade do recurso é transferida para a biblioteca.
+Ownership is transferred to the library.
 
 ---
 
-## User
+## shared_ptr
 
-Representa usuários cadastrados no sistema.
+Used when multiple parts of the system need shared access to the same object.
 
-Usuários podem acessar informações de empréstimos, mas não são donos dos objetos relacionados.
-
----
-
-## Loan
-
-Representa um empréstimo realizado.
-
-Utiliza:
+Example:
 
 ```cpp
 std::shared_ptr<Loan>
 ```
 
-quando múltiplas partes do sistema precisam compartilhar acesso ao mesmo recurso.
+A loan can be referenced by multiple components while keeping the object alive as long as references exist.
 
 ---
 
-## weak_ptr e prevenção de ciclos
+## weak_ptr
 
-Relacionamentos que não representam ownership utilizam:
+Used when an object only needs to observe another object without owning it.
+
+Example:
 
 ```cpp
-std::weak_ptr
+std::weak_ptr<Loan>
 ```
 
-Isso evita ciclos de referência entre objetos e permite que os recursos sejam destruídos corretamente.
+This prevents circular references and allows objects to be destroyed correctly.
 
 ---
 
-# RAII
+# System Architecture
 
-O projeto utiliza RAII para garantir que recursos sejam liberados automaticamente.
+The system is divided into the following components:
 
-Exemplos:
+## Book
 
-* Arquivos abertos e fechados automaticamente.
-* Conexões simuladas com ciclo de vida controlado.
-* Objetos destruídos automaticamente ao sair do escopo.
+Represents a book in the library.
 
-O objetivo é evitar:
+Responsibilities:
 
-* Memory leaks
-* Double free
-* Uso de objetos inválidos
+* Store book information.
+* Maintain book data.
+* Follow modern C++ object lifetime practices.
 
 ---
 
-# Estrutura do projeto
+## Library
 
-```
+Responsible for managing books.
+
+The library owns `Book` objects using `std::unique_ptr`.
+
+This means the library controls the lifetime of the books.
+
+---
+
+## User
+
+Represents users registered in the system.
+
+Users can access loan information but do not own the related resources.
+
+---
+
+## Loan
+
+Represents a book loan.
+
+Uses smart pointers where shared ownership or non-owning references are required.
+
+---
+
+# Project Structure
+
+```text
 Library/
+│
+├── README.md
+├── CMakeLists.txt
 │
 ├── include/
 │   ├── Book.hpp
@@ -139,71 +169,49 @@ Library/
 │   └── main.cpp
 │
 ├── tests/
+│   ├── CMakeLists.txt
+│   ├── BookTest.cpp
+│   ├── OwnershipTest.cpp
+│   └── LibraryTest.cpp
 │
-├── CMakeLists.txt
-└── README.md
+└── build/
 ```
 
 ---
 
-# Requisitos
+# Build System
 
-* C++17 ou superior
-* CMake 3.20+
-* Compilador compatível:
+The project uses a modular CMake structure.
 
-  * GCC
-  * Clang
-  * MSVC
+The root:
+
+```text
+CMakeLists.txt
+```
+
+handles the main project configuration.
+
+The tests directory contains its own:
+
+```text
+tests/CMakeLists.txt
+```
+
+to keep test configuration separated from the main application.
 
 ---
 
-# Como compilar
+# Testing
 
-Clone o repositório:
+Tests are used to validate:
 
-```bash
-git clone git@github.com:SEU_USUARIO/Library.git
-```
+* Object creation and destruction.
+* RAII behavior.
+* Ownership transfer.
+* Smart pointer usage.
+* Library operations.
 
-Entre na pasta:
-
-```bash
-cd Library
-```
-
-Crie a pasta de build:
-
-```bash
-mkdir build
-cd build
-```
-
-Configure o projeto:
-
-```bash
-cmake ..
-```
-
-Compile:
-
-```bash
-cmake --build .
-```
-
-Execute:
-
-```bash
-./Library
-```
-
----
-
-# Testes
-
-Os testes serão executados utilizando o sistema configurado pelo CMake.
-
-Exemplo:
+Run tests:
 
 ```bash
 ctest
@@ -211,7 +219,60 @@ ctest
 
 ---
 
-# Ferramentas utilizadas
+# Requirements
+
+* C++17 or newer
+* CMake 3.20+
+* Compatible compiler:
+
+  * Clang
+  * GCC
+  * MSVC
+
+---
+
+# Building the Project
+
+Clone the repository:
+
+```bash
+git clone git@github.com:YOUR_USERNAME/Library.git
+```
+
+Navigate into the project:
+
+```bash
+cd Library
+```
+
+Create a build directory:
+
+```bash
+mkdir build
+cd build
+```
+
+Configure the project:
+
+```bash
+cmake ..
+```
+
+Build:
+
+```bash
+cmake --build .
+```
+
+Run:
+
+```bash
+./Library
+```
+
+---
+
+# Tools Used
 
 * C++
 * CMake
@@ -223,34 +284,16 @@ ctest
 
 ---
 
-# O que este projeto demonstra
+# Future Improvements
 
-Este projeto demonstra:
+Possible improvements:
 
-* Como projetar sistemas usando ownership explícito.
-* Como evitar gerenciamento manual de memória.
-* Como utilizar smart pointers corretamente.
-* Como aplicar princípios modernos de C++.
-* Como estruturar um projeto profissional usando CMake.
-
----
-
-# Próximos passos
-
-Possíveis melhorias:
-
-* Persistência de dados em arquivos.
-* Banco de dados.
-* Interface gráfica.
-* API REST.
-* Sistema de autenticação.
-* Logs utilizando RAII.
-* Benchmark de performance.
+* Data persistence.
+* Database integration.
+* User authentication.
+* Graphical interface.
+* REST API.
+* RAII-based logging system.
+* Performance benchmarks.
 
 ---
-
-## Autor
-
-Amil
-
-Projeto desenvolvido como estudo de C++ moderno e gerenciamento seguro de recursos.
