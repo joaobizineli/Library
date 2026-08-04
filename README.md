@@ -294,6 +294,7 @@ Possible improvements:
 * Graphical interface.
 * REST API.
 * RAII-based logging system.
-* Performance benchmarks.
+* Performance benchmarks:
+  * Compare `unique_ptr`/`shared_ptr`/`weak_ptr` ownership against manual `new`/`delete` (raw pointers) to measure the real cost of atomic refcounting and control block allocation in `shared_ptr`/`weak_ptr`, versus the near-zero overhead expected from `unique_ptr`. Requires a Release/`-O2` build to be meaningful.
 
 ---
