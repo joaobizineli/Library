@@ -8,11 +8,10 @@ This project focuses on understanding and implementing core C++ concepts such as
 * Ownership and resource management
 * Smart pointers (`std::unique_ptr`, `std::shared_ptr`, `std::weak_ptr`)
 * Move semantics
-* Rule of Zero / Rule of Five
+* Rule of Zero
 * STL containers
 * CMake project organization
 * Automated testing
-* Debugging and sanitizers
 
 ---
 
@@ -98,10 +97,10 @@ Used when an object only needs to observe another object without owning it.
 Example:
 
 ```cpp
-std::weak_ptr<Loan>
+std::weak_ptr<User>
 ```
 
-This prevents circular references and allows objects to be destroyed correctly.
+A `Loan` observes the `User` it belongs to without owning it. Since `User` also holds a `shared_ptr<Loan>`, using `shared_ptr` on both sides would create a reference cycle that leaks memory (neither object's refcount would ever reach zero). The `weak_ptr` on the `Loan` side breaks that cycle.
 
 ---
 
@@ -123,11 +122,18 @@ Responsibilities:
 
 ## Library
 
-Responsible for managing books.
+Responsible for managing books and loans.
 
-The library owns `Book` objects using `std::unique_ptr`.
+The library owns `Book` objects using `std::unique_ptr` and controls their lifetime. It also holds `std::shared_ptr<Loan>`, sharing ownership of active loans with the `User` that borrowed the book.
 
-This means the library controls the lifetime of the books.
+Responsibilities:
+
+* `addBook` — registers a new book (transfers ownership to the library).
+* `findBook(id)` — looks up a book by ID, returning a non-owning `Book*` (or `nullptr` if not found).
+* `getBooks()` — read-only access to the full catalog.
+* `borrowBook(id, user)` — validates that the book exists and isn't already on loan, then creates the `Loan` and registers it with both the library and the user. Returns `nullptr` if the borrow is invalid.
+
+A `Loan` refers to its book by **ID (`int`)**, not by pointer. Since the `Library` is the sole owner of each `Book` (via `unique_ptr`), no other object is allowed to hold a pointer to it — that would either fight the `unique_ptr` for ownership or risk becoming a dangling pointer if the book were ever removed. An ID is looked up through `Library::findBook` on demand instead.
 
 ---
 
@@ -135,7 +141,7 @@ This means the library controls the lifetime of the books.
 
 Represents users registered in the system.
 
-Users can access loan information but do not own the related resources.
+A `User` shares ownership of the `Loan`s associated with it (`std::shared_ptr<Loan>`), alongside the `Library`.
 
 ---
 
@@ -143,7 +149,7 @@ Users can access loan information but do not own the related resources.
 
 Represents a book loan.
 
-Uses smart pointers where shared ownership or non-owning references are required.
+Holds the borrowed book's ID (`int`, not a pointer — see above) and a `std::weak_ptr<User>` observing the borrower without owning them, which avoids a reference cycle with `User`'s `shared_ptr<Loan>`.
 
 ---
 
@@ -270,6 +276,18 @@ Run:
 ./Library
 ```
 
+This launches an interactive terminal menu, pre-loaded with a few example books and a user, where you can list/search books, register books and users, and borrow a book:
+
+```text
+1. Listar livros
+2. Consultar livro por ID
+3. Adicionar livro
+4. Listar usuarios
+5. Adicionar usuario
+6. Emprestar livro
+0. Sair
+```
+
 ---
 
 # Tools Used
@@ -278,23 +296,5 @@ Run:
 * CMake
 * Git
 * GoogleTest
-* AddressSanitizer
-* UndefinedBehaviorSanitizer
-* LLDB/GDB
-
----
-
-# Future Improvements
-
-Possible improvements:
-
-* Data persistence.
-* Database integration.
-* User authentication.
-* Graphical interface.
-* REST API.
-* RAII-based logging system.
-* Performance benchmarks:
-  * Compare `unique_ptr`/`shared_ptr`/`weak_ptr` ownership against manual `new`/`delete` (raw pointers) to measure the real cost of atomic refcounting and control block allocation in `shared_ptr`/`weak_ptr`, versus the near-zero overhead expected from `unique_ptr`. Requires a Release/`-O2` build to be meaningful.
 
 ---
