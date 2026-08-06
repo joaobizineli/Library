@@ -102,6 +102,8 @@ std::weak_ptr<User>
 
 A `Loan` observes the `User` it belongs to without owning it. Since `User` also holds a `shared_ptr<Loan>`, using `shared_ptr` on both sides would create a reference cycle that leaks memory (neither object's refcount would ever reach zero). The `weak_ptr` on the `Loan` side breaks that cycle.
 
+`Loan::getBorrowerName()` reads through this `weak_ptr` via `user.lock()`: if the `User` is still alive it returns their name, otherwise (the `User` was destroyed while the `Loan` still exists) it returns `"<unknown>"` instead of dereferencing a dangling pointer. This isn't just asserted — `OwnershipTest.LoanObservesUserWithoutOwningIt` builds a `User` and a `Loan` in a nested scope, confirms `getBorrowerName()` returns the user's name while it's alive, lets the `User` go out of scope, and confirms it falls back to `"<unknown>"` afterward.
+
 ---
 
 # System Architecture
@@ -129,7 +131,7 @@ The library owns `Book` objects using `std::unique_ptr` and controls their lifet
 Responsibilities:
 
 * `addBook` — registers a new book (transfers ownership to the library).
-* `findBook(id)` — looks up a book by ID, returning a non-owning `Book*` (or `nullptr` if not found).
+* `findBook(id)` — looks up a book by ID, returning a non-owning `const Book*` (or `nullptr` if not found). It's `const` both in the pointer's constness and in the method itself: callers can only read the returned `Book`, never mutate it through this lookup.
 * `getBooks()` — read-only access to the full catalog.
 * `borrowBook(id, user)` — validates that the book exists and isn't already on loan, then creates the `Loan` and registers it with both the library and the user. Returns `nullptr` if the borrow is invalid.
 
@@ -150,6 +152,8 @@ A `User` shares ownership of the `Loan`s associated with it (`std::shared_ptr<Lo
 Represents a book loan.
 
 Holds the borrowed book's ID (`int`, not a pointer — see above) and a `std::weak_ptr<User>` observing the borrower without owning them, which avoids a reference cycle with `User`'s `shared_ptr<Loan>`.
+
+`getBorrowerName()` is the only thing that reads that `weak_ptr` — see the `weak_ptr` section above for how it handles the borrower no longer being alive.
 
 ---
 
