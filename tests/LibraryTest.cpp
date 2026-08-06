@@ -20,7 +20,7 @@ TEST(LibraryTest, AddsBookAndFindsItByID)
         )
     );
 
-    Book *found = library.findBook(20);
+    const Book *found = library.findBook(20);
 
     ASSERT_NE(found, nullptr);
     EXPECT_EQ(found->getTitle(), "C++ Primer");

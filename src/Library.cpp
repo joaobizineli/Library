@@ -15,7 +15,7 @@ void Library::addLoan(
     loans.push_back(loan);
 }
 
-Book *Library::findBook(int id) const
+const Book *Library::findBook(int id) const
 {
     for (const auto &book : books)
     {
@@ -37,7 +37,7 @@ std::shared_ptr<Loan> Library::borrowBook(
     int book_id,
     std::shared_ptr<User> user)
 {
-    Book *book = findBook(book_id);
+    const Book *book = findBook(book_id);
 
     if (book == nullptr)
     {

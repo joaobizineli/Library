@@ -21,7 +21,7 @@ public:
     void addLoan(
         std::shared_ptr<Loan> loan);
 
-    Book *findBook(int id) const;
+    const Book *findBook(int id) const;
 
     const std::vector<std::unique_ptr<Book>> &getBooks() const;
 

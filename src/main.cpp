@@ -91,7 +91,7 @@ namespace
             return;
         }
 
-        Book *book = library.findBook(*id);
+        const Book *book = library.findBook(*id);
 
         if (book == nullptr)
         {

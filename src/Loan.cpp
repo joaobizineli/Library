@@ -1,4 +1,5 @@
 #include "Loan.hpp"
+#include "User.hpp"
 
 Loan::Loan(
     int book_id,
@@ -11,4 +12,14 @@ Loan::Loan(
 int Loan::getBookID() const
 {
     return book_id;
+}
+
+std::string Loan::getBorrowerName() const
+{
+    if (auto owner = user.lock())
+    {
+        return owner->getName();
+    }
+
+    return "<unknown>";
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 class User;
 
@@ -17,4 +18,6 @@ public:
         std::shared_ptr<User> user);
 
     int getBookID() const;
+
+    std::string getBorrowerName() const;
 };

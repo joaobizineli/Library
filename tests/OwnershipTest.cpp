@@ -152,3 +152,38 @@ TEST(OwnershipTest, WeakPtrExpiresWhenOwnerDies)
         observer.expired()
     );
 }
+
+
+
+TEST(OwnershipTest, LoanObservesUserWithoutOwningIt)
+{
+    std::shared_ptr<Loan> loan;
+
+
+    {
+        auto user =
+            std::make_shared<User>(
+                "Jaypas"
+            );
+
+
+        loan =
+            std::make_shared<Loan>(
+                10,
+                user
+            );
+
+
+        EXPECT_EQ(
+            loan->getBorrowerName(),
+            "Jaypas"
+        );
+    }
+
+
+    // user died at the end of the block; Loan only held a weak_ptr
+    EXPECT_EQ(
+        loan->getBorrowerName(),
+        "<unknown>"
+    );
+}
